@@ -1,17 +1,17 @@
 <meta charset="utf-8">
-<title>Classement service — Heures par matricule</title>
+<title>Heures de service — Consultation</title>
 
 <script>
 const GS_URL = "https://script.google.com/macros/s/AKfycbzBe7mmsiIY21I1yK5YbO-900GrCwvibx2wk5GeF0DfoA2fMote-_fVrbc-d2zO-oY8uA/exec";
 </script>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230B0B0B'/%3E%3Ccircle cx='50' cy='50' r='40' fill='none' stroke='%2316C784' stroke-width='7'/%3E%3Cg fill='none' stroke='%23FFFFFF' stroke-width='9' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M32 56 L50 40 L68 56'/%3E%3Cpath d='M32 72 L50 56 L68 72'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230B0B0B'/%3E%3Ccircle cx='50' cy='50' r='40' fill='none' stroke='%2316C784' stroke-width='7'/%3E%3Cg fill='none' stroke='%23FFFFFF' stroke-width='9' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M35 50 h30'/%3E%3Cpath d='M50 35 v30'/%3E%3C/g%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 :root{
   --bg:#0B0B0B; --surface:#1B1B1D; --surface2:#242427;
   --ink:#F2F2F2; --muted:#8E9490; --line:#2C2C2F;
   --accent:#16C784; --accent-ink:#FFFFFF; --accent-soft:#123526;
-  --warn:#D9A441; --warn-bg:#2B2517; --warn-line:#4A3E22;
+  --warn:#D9A441;
   --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;
 }
 *{box-sizing:border-box}
@@ -19,23 +19,20 @@ body{
   margin:0; background:var(--bg); color:var(--ink);
   font:15px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif;
 }
-.wrap{max-width:980px; margin:0 auto; padding:28px 20px 80px; display:flex; flex-direction:column; gap:24px}
-header h1{margin:0; font-size:26px; font-weight:700; letter-spacing:-.01em; text-wrap:balance}
+.wrap{max-width:820px; margin:0 auto; padding:28px 20px 80px; display:flex; flex-direction:column; gap:22px}
+header h1{margin:0; font-size:26px; font-weight:700; letter-spacing:-.01em}
 header p{margin:6px 0 0; color:var(--muted); max-width:62ch}
+.badge-ro{
+  display:inline-block; margin-top:10px;
+  font:600 11.5px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase;
+  color:var(--accent); background:var(--accent-soft);
+  border:1px solid transparent; border-radius:99px; padding:7px 12px;
+}
 .label{
   display:block; font-size:11.5px; font-weight:600; letter-spacing:.08em;
   text-transform:uppercase; color:var(--muted); margin-bottom:8px;
 }
-.inputs{display:grid; grid-template-columns:1fr 1fr; gap:16px}
-@media (max-width:760px){ .inputs{grid-template-columns:1fr} }
 .panel{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px 16px}
-textarea{
-  width:100%; height:170px; resize:vertical;
-  background:var(--surface2); color:var(--ink);
-  border:1px solid var(--line); border-radius:6px; padding:10px 12px;
-  font:12.5px/1.5 var(--mono); white-space:pre;
-}
-textarea:focus{outline:2px solid var(--accent); outline-offset:1px; border-color:transparent}
 input[type=url]{
   width:100%; background:var(--surface2); color:var(--ink);
   border:1px solid var(--line); border-radius:6px; padding:10px 12px;
@@ -49,19 +46,15 @@ input[type=url]:focus{outline:2px solid var(--accent); outline-offset:1px; borde
   border:1px solid var(--line); border-radius:6px; padding:9px 12px; font-size:14px;
 }
 .toolbar input[type=search]:focus{outline:2px solid var(--accent); outline-offset:1px}
-.stats{display:flex; gap:8px; flex-wrap:wrap}
-.chip{
-  font:600 12.5px/1 var(--mono); padding:7px 10px; border-radius:99px;
-  background:var(--accent-soft); color:var(--accent); border:1px solid transparent;
-}
-.chip.warnchip{background:var(--warn-bg); color:var(--warn); border-color:var(--warn-line)}
 .btn{
   font:700 12.5px "Segoe UI",system-ui,sans-serif; padding:10px 16px; border-radius:10px;
   text-transform:uppercase; letter-spacing:.05em;
   background:var(--accent); color:var(--accent-ink); border:none; cursor:pointer;
 }
 .btn:hover{filter:brightness(1.08)}
-.btn:focus-visible{outline:2px solid var(--ink); outline-offset:2px}
+.btn:disabled{opacity:.6; cursor:default}
+.status{font-size:12.5px; color:var(--muted)}
+.status.err{color:var(--warn)}
 .tablebox{background:var(--surface); border:1px solid var(--line); border-radius:14px; overflow-x:auto}
 table{width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums}
 th,td{padding:9px 14px; text-align:left; border-top:1px solid var(--line); white-space:nowrap}
@@ -69,492 +62,131 @@ thead th{
   border-top:none; font-size:11.5px; letter-spacing:.08em; text-transform:uppercase;
   color:var(--muted); background:var(--surface2); position:sticky; top:0;
 }
-th.sortable{cursor:pointer; user-select:none}
-th.sortable:hover{color:var(--ink)}
-th.sortable:focus-visible{outline:2px solid var(--accent); outline-offset:-2px}
 td.mat{font:700 14px var(--mono); color:var(--accent); width:1%}
 td.time{font:600 13.5px var(--mono)}
-td.time .eq{font-weight:400; color:var(--muted); margin-left:8px; font-size:12px}
-td.grade{color:var(--muted); font-size:13.5px; white-space:normal; min-width:120px}
 td.name{font-weight:600}
 tr.zero td{color:var(--muted)}
 tr.zero td.name{font-weight:400}
 tr.zero td.mat{color:var(--muted)}
-.empty{padding:22px 16px; color:var(--muted); text-align:center}
-.warnpanel{background:var(--warn-bg); border:1px solid var(--warn-line); border-radius:14px; padding:14px 16px}
-.warnpanel .label{color:var(--warn)}
-.warnpanel ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
-.warnpanel li{
-  display:flex; justify-content:space-between; gap:16px; padding:6px 2px;
-  border-top:1px dashed var(--warn-line); font-size:14px;
-}
-.warnpanel li:first-child{border-top:none}
-.warnpanel li .t{font:600 13px var(--mono); color:var(--warn)}
-.warnpanel .none{color:var(--muted); font-size:13.5px}
-.misspanel .taglist{display:flex; flex-wrap:wrap; gap:8px; margin:0; padding:0; list-style:none}
-.misspanel .taglist li{
-  font:12.5px var(--mono); background:var(--surface2); border:1px solid var(--line);
-  border-radius:6px; padding:5px 9px; color:var(--muted);
-}
-.misspanel .taglist li b{color:var(--ink); font-weight:700}
+.empty{padding:26px 16px; color:var(--muted); text-align:center}
 footer{color:var(--muted); font-size:12.5px}
 </style>
 
 <div class="wrap">
 <header>
-  <h1>Classement service — heures par matricule</h1>
-  <p>Colle le classement service ci-dessous : le tableau se met à jour tout seul. La liste des matricules est intégrée à la page.</p>
-  <p style="margin-top:14px"><a href="voir-matricules-en-service.html" class="btn" style="display:inline-block; text-decoration:none; font-size:14px; padding:11px 18px">Voir les matricules en service →</a></p>
+  <h1>Heures de service — consultation</h1>
+  <p>Cette page affiche les heures telles qu'elles ont été envoyées dans le Google Sheet. Elle est en lecture seule : rien ne peut y être modifié.</p>
+  <span class="badge-ro">🔒 Lecture seule</span>
 </header>
-
-<section class="panel">
-  <label class="label" for="pointeuse">Classement service (à coller à chaque fois)</label>
-  <textarea id="pointeuse" spellcheck="false" placeholder="1	Kira Martinez	2 jours 14 heures&#10;2	Sam Boudj	2 jours 12 heures&#10;…"></textarea>
-  <p class="hint" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
-    <button id="clearPaste" class="btn" type="button">🗑 Vider le classement</button>
-    <span>Format : numéro, nom, durée (jours / heures / minutes / secondes). La liste des matricules est intégrée à la page.</span>
-  </p>
-</section>
 
 <section>
   <div class="toolbar" style="margin-bottom:12px">
     <input type="search" id="search" placeholder="Rechercher un matricule ou un nom…" aria-label="Rechercher">
-    <div class="stats" id="stats"></div>
-    <button id="copyDiscord" class="btn" type="button">📋 Copier pour Discord</button>
-    <button id="copyExcel" class="btn" type="button">📋 Copier pour Excel</button>
-    <button id="sendSheet" class="btn" type="button">📤 Mettre à jour le Google Sheet</button>
+    <span class="status" id="status">—</span>
+    <button id="refresh" class="btn" type="button">🔄 Actualiser</button>
   </div>
+  <p class="status" id="lastMaj" style="margin:0 0 12px"></p>
   <div class="tablebox">
     <table>
-      <thead>
-        <tr>
-          <th class="sortable" id="sortMat" tabindex="0">Matricule ▲▼</th>
-          <th>Nom</th>
-          <th class="sortable" id="sortTime" tabindex="0">Temps de service ▲▼</th>
-          <th>Grade</th>
-        </tr>
-      </thead>
+      <thead><tr id="headRow"><th>Matricule</th><th>Nom</th><th>Temps</th></tr></thead>
       <tbody id="tbody"></tbody>
     </table>
-    <div class="empty" id="emptyMsg" hidden>Colle le classement service ci-dessus pour voir le tableau.</div>
+    <div class="empty" id="emptyMsg">Chargement…</div>
   </div>
 </section>
 
-<section class="warnpanel">
-  <span class="label">Pas dans la liste matricule — à vérifier <span id="warnCount"></span></span>
-  <ul id="warnList"></ul>
-</section>
-
-<section class="panel misspanel">
-  <span class="label">Matricules absents du classement <span id="missCount"></span></span>
-  <ul class="taglist" id="missList"></ul>
-</section>
-
-<section class="panel">
-  <label class="label" for="ignores">Personnes à ignorer (connues, hors liste matricule) <span id="ignCount"></span></label>
-  <textarea id="ignores" spellcheck="false" style="height:110px" placeholder="Un nom par ligne…"></textarea>
-  <p class="hint">Un nom par ligne. Ces personnes n'apparaîtront plus dans « à vérifier ». La liste reste enregistrée dans ce navigateur.</p>
-</section>
-
-<section class="panel">
-  <label class="label" for="matricules">Liste des matricules (modifiable ici) <span id="matCount"></span></label>
-  <textarea id="matricules" spellcheck="false" style="height:220px" placeholder="01 | Nom Prénom -> Grade&#10;02 |&#10;…"></textarea>
-  <p class="hint">Modifie ou colle la nouvelle liste ici : c'est enregistré automatiquement et les deux pages l'utilisent aussitôt.</p>
-</section>
-
-<section class="panel">
-  <label class="label" for="gsUrl">Google Sheet — adresse du script (réglage, une seule fois)</label>
-  <input id="gsUrl" type="url" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec">
-  <p class="hint">Colle ici l'adresse « Application Web » de ton script Google (mode d'emploi dans google-sheet-mode-demploi.txt). Elle reste enregistrée dans ce navigateur.</p>
-</section>
-
-<footer>Le rapprochement des noms ignore majuscules, accents, émojis, l'ordre prénom/nom et les petites fautes de frappe. En cas de doute, le nom part dans la case « à vérifier » plutôt que d'être attribué au mauvais matricule.</footer>
 </div>
 
-<script src="matricules.js"></script>
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
-const taP = $("pointeuse"), taM = $("matricules"), taI = $("ignores");
-const IGNORES_VERSION = 2;
-const DEFAULT_IGNORES = `Sam Boudj
-polak belve
-Kendrick Bueno
-Buck Hiedler
-Juju Pierce
-Sr Costa
-Camilia Loera
-Julie Martins
-Zack Loera
-Vanessa Rich
-John Shepard
-Iris Boudj
-Alex Coelho
-James Rich-Forge`;
-// la liste des matricules vit dans le fichier dédié matricules.js :
-// on la récupère en appelant sa fonction getMatricules()
-const DEFAULT_MATRICULES = (typeof getMatricules === "function") ? getMatricules().trim() : "";
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-/* ---------- normalisation des noms ---------- */
-const STOP = new Set(["sr","dr","mr","don","sra"]);
-function tokens(name){
-  return name.toLowerCase()
-    .normalize("NFD").replace(/[̀-ͯ]/g,"")
-    .replace(/[^\p{L}\p{N}\s]/gu," ")
-    .split(/\s+/)
-    .filter(t => t.length > 1 && !STOP.has(t));
-}
-function cleanName(raw){
-  return raw.replace(/[^\p{L}\p{N}\s.''’-]/gu," ").replace(/\s+/g," ").trim();
-}
-function lev(a,b){
-  if(a===b) return 0;
-  const m=a.length,n=b.length;
-  let prev=Array.from({length:n+1},(_,i)=>i);
-  for(let i=1;i<=m;i++){
-    const cur=[i];
-    for(let j=1;j<=n;j++)
-      cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
-    prev=cur;
-  }
-  return prev[n];
-}
-function tokMatch(a,b){
-  if(a===b) return 2;               // exact
-  const min=Math.min(a.length,b.length);
-  const allow = min>=7 ? 2 : min>=4 ? 1 : 0;
-  return (allow && lev(a,b)<=allow) ? 1 : 0; // approx
-}
-
-/* ---------- parsing ---------- */
-function parseMatricules(text){
-  const out=[];
-  for(const line of text.split(/\r?\n/)){
-    const m=line.match(/^\s*(\d{1,3})\s*[|Il]\s*(.*)$/);
-    if(!m) continue;
-    const parts=m[2].split(/->|→/);
-    const name=cleanName(parts[0]||"");
-    if(!name) continue;
-    let grade=(parts[1]||"").replace(/:[^:\s]+:/g,"");
-    grade=cleanName(grade)||"—";
-    out.push({mat:m[1].padStart(2,"0"), name, grade, toks:tokens(name)});
-  }
-  return out;
-}
-const UNITS={jour:86400, heure:3600, minute:60, seconde:1};
-function parsePointeuse(text){
-  const out=[];
-  for(const line of text.split(/\r?\n/)){
-    const m=line.match(/^\s*\d+[\s.)-]+(.+?)[\s\t]+((?:\d+\s*(?:jours?|heures?|minutes?|secondes?)[\s,]*)+)$/i);
-    if(!m) continue;
-    const name=cleanName(m[1]);
-    if(!name) continue;
-    let sec=0;
-    for(const [,n,u] of m[2].matchAll(/(\d+)\s*(jour|heure|minute|seconde)/gi))
-      sec += parseInt(n,10)*UNITS[u.toLowerCase()];
-    out.push({name, sec, toks:tokens(name)});
-  }
-  return out;
-}
-
-/* ---------- rapprochement ---------- */
-function pairScore(A,B){
-  let hits=0, exact=0;
-  const used=new Set();
-  for(const t of A){
-    let best=0, bi=-1;
-    B.forEach((u,k)=>{
-      if(used.has(k)) return;
-      const s=tokMatch(t,u);
-      if(s>best){best=s; bi=k;}
-    });
-    if(best){hits++; if(best===2) exact++; used.add(bi);}
-  }
-  const ok = hits>=2 || (hits>=1 && (A.length===1 || B.length===1));
-  return {ok, hits, exact};
-}
-function matchLists(mats, points){
-  const cands=[];
-  mats.forEach((M,i)=>points.forEach((P,j)=>{
-    const r=pairScore(M.toks,P.toks);
-    if(r.ok) cands.push({i,j,score: 2*r.hits/(M.toks.length+P.toks.length) + r.exact*0.01 + r.hits*0.001});
-  }));
-  cands.sort((a,b)=>b.score-a.score);
-  const matByIdx=new Array(mats.length).fill(-1), usedP=new Set();
-  for(const c of cands){
-    if(matByIdx[c.i]!==-1 || usedP.has(c.j)) continue;
-    matByIdx[c.i]=c.j; usedP.add(c.j);
-  }
-  return {matByIdx, usedP};
-}
-
-/* ---------- affichage ---------- */
-function fmtTime(sec){
-  if(sec<=0) return "0";
-  if(sec<60) return sec+" s";
-  const j=Math.floor(sec/86400), h=Math.floor(sec%86400/3600), mn=Math.floor(sec%3600/60);
-  const parts=[];
-  if(j) parts.push(j+"j");
-  if(h||j) parts.push(h+"h");
-  if(mn && !j) parts.push(mn.toString().padStart(2,"0")+"m");
-  return parts.join(" ")||"0";
-}
-function eqHours(sec){
-  return sec>=86400 ? "= "+Math.round(sec/3600)+" h" : "";
-}
-function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
-
-let sortKey="time", sortDir=-1;   // défaut : temps décroissant
-let rows=[], unmatched=[], missing=[], ignoredSeen=0, pointsCount=0;
-
-function parseIgnores(text){
-  return text.split(/\r?\n/).map(cleanName).filter(Boolean).map(tokens).filter(t=>t.length);
-}
-function analyse(){
-  const mats=parseMatricules(taM.value);
-  const points=parsePointeuse(taP.value);
-  pointsCount=points.length;
-  const ignores=parseIgnores(taI.value);
-  const {matByIdx, usedP}=matchLists(mats,points);
-  rows=mats.map((M,i)=>{
-    const P=matByIdx[i]>=0 ? points[matByIdx[i]] : null;
-    return {mat:M.mat, name:M.name, grade:M.grade, sec:P?P.sec:-1, pointName:P?P.name:null};
-  });
-  const rest=points.filter((_,j)=>!usedP.has(j));
-  unmatched=rest.filter(p=>!ignores.some(ig=>pairScore(ig,p.toks).ok)).sort((a,b)=>b.sec-a.sec);
-  ignoredSeen=rest.length-unmatched.length;
-  missing=rows.filter(r=>r.sec<0);
-  render();
-}
-
-function computeShown(){
-  const q=tokens($("search").value).join(" ");
-  const shown=rows.filter(r=>r.sec>=0).filter(r=>{
-    if(!q) return true;
-    return r.mat.includes($("search").value.trim()) ||
-           tokens(r.name).join(" ").includes(q);
-  });
-  shown.sort((a,b)=>{
-    const d = sortKey==="mat" ? a.mat.localeCompare(b.mat,undefined,{numeric:true})
-                              : a.sec-b.sec;
-    return d*sortDir || a.mat.localeCompare(b.mat,undefined,{numeric:true});
-  });
-  return shown;
-}
-function render(){
-  const shown=computeShown();
-  $("tbody").innerHTML=shown.map(r=>
-    `<tr class="${r.sec===0?"zero":""}">
-      <td class="mat">${r.mat}</td>
-      <td class="name">${esc(r.name)}</td>
-      <td class="time">${fmtTime(r.sec)}${eqHours(r.sec)?`<span class="eq">${eqHours(r.sec)}</span>`:""}</td>
-      <td class="grade">${esc(r.grade)}</td>
-    </tr>`).join("");
-  $("emptyMsg").hidden = shown.length>0;
-  if(!shown.length) $("emptyMsg").textContent =
-    !pointsCount ? "Colle le classement service ci-dessus pour voir les temps — la liste des matricules est déjà chargée." :
-    rows.length ? "Aucun résultat pour cette recherche." :
-    "Aucun matricule reconnu dans la liste de droite.";
-
-  const matched=rows.filter(r=>r.sec>=0).length;
-  $("stats").innerHTML=
-    `<span class="chip">${matched} matricules classés</span>`+
-    (unmatched.length?`<span class="chip warnchip">${unmatched.length} à vérifier</span>`:"");
-
-  $("warnCount").textContent=unmatched.length?`(${unmatched.length})`:"";
-  $("warnList").innerHTML=unmatched.length
-    ? unmatched.map(p=>`<li><span>${esc(p.name)}</span><span class="t">${fmtTime(p.sec)}</span></li>`).join("")
-    : `<li class="none">Tout le monde dans le classement a été retrouvé dans la liste des matricules.</li>`;
-
-  $("ignCount").textContent=ignoredSeen?`— ${ignoredSeen} masqué${ignoredSeen>1?"s":""} dans ce classement`:"";
-  $("matCount").textContent=rows.length?`(${rows.length} matricules reconnus)`:"";
-
-  $("missCount").textContent=missing.length?`(${missing.length})`:"";
-  $("missList").innerHTML=missing.length
-    ? missing.map(r=>`<li><b>${r.mat}</b> ${esc(r.name)}</li>`).join("")
-    : `<li>Aucun — tous les matricules apparaissent dans le classement.</li>`;
-}
-
-/* ---------- exports ---------- */
-function fmtHM(sec){
-  const h=Math.floor(sec/3600), m=Math.floor(sec%3600/60);
-  return h+"h"+String(m).padStart(2,"0");
-}
-function discordText(){
-  const shown=computeShown();
-  const lines=shown.map(r=>{
-    let n=r.name;
-    if(n.length>20) n=n.slice(0,19)+"…";
-    return r.mat+"  "+n.padEnd(20)+" "+fmtHM(r.sec);
-  });
-  return "```\nMAT NOM                  TEMPS\n"+lines.join("\n")+"\n```";
-}
-function excelText(){
-  // tous les matricules de 01 à 90 (ou plus si la liste va plus loin),
-  // avec / pour les matricules sans personne
-  const byMat={};
-  let maxMat=90;
-  rows.forEach(r=>{
-    const n=parseInt(r.mat,10);
-    byMat[n]=r;
-    if(n>maxMat) maxMat=n;
-  });
-  const lines=["Matricule\tNom\tTemps"];
-  for(let i=1;i<=maxMat;i++){
-    const r=byMat[i];
-    if(!r) lines.push([String(i).padStart(2,"0"),"/","/"].join("\t"));
-    else lines.push([r.mat, r.name, r.sec>=0?fmtTime(r.sec):"/"].join("\t"));
-  }
-  return lines.join("\n");
-}
-function bindCopy(id, makeText){
-  const btn=$(id), orig=btn.textContent;
-  btn.addEventListener("click", async ()=>{
-    const txt=makeText();
-    let ok=false;
-    try{ await navigator.clipboard.writeText(txt); ok=true; }
-    catch(e){
-      const ta=document.createElement("textarea");
-      ta.value=txt; ta.style.cssText="position:fixed;opacity:0";
-      document.body.appendChild(ta); ta.select();
-      try{ ok=document.execCommand("copy"); }catch(_){}
-      ta.remove();
-    }
-    btn.textContent = ok ? "✓ Copié !" : "Échec — copie bloquée";
-    setTimeout(()=>{btn.textContent=orig;},1800);
-  });
-}
-bindCopy("copyDiscord", discordText);
-bindCopy("copyExcel", excelText);
-
-/* ---------- envoi vers Google Sheet ----------
-   Le Sheet est REMPLACÉ à chaque envoi (le script Google efface la feuille
-   puis réécrit tout). L'envoi part automatiquement dès que le classement
-   change ; le bouton reste là pour forcer un envoi à la main. */
-const gsInput=$("gsUrl");
-const SHEET_BTN_LABEL="📤 Mettre à jour le Google Sheet";
-try{ gsInput.value=localStorage.getItem("gsUrl")||""; }catch(e){}
-gsInput.addEventListener("input",()=>{ try{ localStorage.setItem("gsUrl",gsInput.value.trim()); }catch(e){} });
-
-// L'adresse écrite en dur en haut du fichier (GS_URL) est prioritaire ;
-// la case en bas de page ne sert que si GS_URL est vide.
-function getSheetUrl(){
+/* L'adresse du script Google (GS_URL) est déclarée EN HAUT du fichier.
+   Si jamais elle était vide, la page reprend celle enregistrée par la
+   page « Classement service » dans ce navigateur. */
+function getUrl(){
   if(GS_URL.trim()) return GS_URL.trim();
-  return (gsInput.value||"").trim();
+  try{ return (localStorage.getItem("gsUrl")||"").trim(); }catch(e){ return ""; }
 }
 
-let lastSent="", sending=false;
-async function sendToSheet(manual){
-  const btn=$("sendSheet");
-  const url=getSheetUrl();
+let data=[];          // lignes du Sheet (sans l'en-tête)
+let enCours=false;
+
+function setStatus(msg, err){
+  const el=$("status");
+  el.textContent=msg;
+  el.classList.toggle("err",!!err);
+}
+
+async function charger(){
+  const url=getUrl();
+  const empty=$("emptyMsg");
   if(!url){
-    if(manual){
-      btn.textContent="⚠ Renseigne d'abord l'adresse du script (en bas de page)";
-      gsInput.focus();
-      setTimeout(()=>{btn.textContent=SHEET_BTN_LABEL;},3500);
-    }
+    data=[]; render();
+    empty.hidden=false;
+    empty.textContent="Adresse du script Google non configurée — ouvre d'abord la page « Classement service » sur ce navigateur, ou demande à intégrer l'adresse dans cette page.";
+    setStatus("—");
     return;
   }
-  const data=excelText();
-  if(!manual && (data===lastSent || sending)) return; // rien de neuf : pas d'envoi
-  sending=true;
-  btn.disabled=true;
-  btn.textContent = manual ? "⏳ Envoi en cours…" : "⏳ Mise à jour auto du Sheet…";
-  let msg, ok=false;
+  if(enCours) return;
+  enCours=true;
+  setStatus("⏳ Chargement…");
+  $("refresh").disabled=true;
   try{
-    const res=await fetch(url,{
-      method:"POST",
-      headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body:data
-    });
-    const j=await res.json().catch(()=>null);
-    ok = (j&&j.ok) || res.ok;
-    msg = (j&&j.ok) ? `✓ Google Sheet mis à jour (${j.rows} lignes)`
-        : res.ok ? "✓ Envoyé !" : "Échec — vérifie l'adresse du script";
+    const res=await fetch(url,{method:"GET"});
+    const j=await res.json();
+    if(!j || !j.ok || !Array.isArray(j.rows)) throw new Error("réponse inattendue");
+    const rows=j.rows.map(r=>r.map(v=>String(v==null?"":v)));
+    // première ligne = en-têtes si elle ressemble à des titres
+    let head=["Matricule","Nom","Temps"];
+    let corps=rows;
+    if(rows.length && rows[0].some(c=>/matricule|nom|temps/i.test(c))){
+      head=rows[0]; corps=rows.slice(1);
+    }
+    $("headRow").innerHTML=head.map(h=>`<th>${esc(h)}</th>`).join("");
+    data=corps;
+    render();
+    setStatus("✓ À jour — "+new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}));
+    // date de la dernière mise à jour du doc (fournie par le script Google)
+    if(j.maj){
+      const d=new Date(j.maj);
+      $("lastMaj").textContent="📄 Dernière mise à jour du doc : "+
+        d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})+
+        " à "+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+    }else{
+      $("lastMaj").textContent="";
+    }
   }catch(e){
-    // certains navigateurs bloquent la lecture de la réponse : envoi aveugle en secours
-    try{
-      await fetch(url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:data});
-      ok=true;
-      msg="✓ Envoyé (vérifie le Sheet)";
-    }catch(_){ msg="Échec — vérifie l'adresse du script et ta connexion"; }
+    setStatus("Échec du chargement — vérifie l'adresse du script (doGet installé ?)",true);
+    if(!data.length){
+      $("emptyMsg").hidden=false;
+      $("emptyMsg").textContent="Impossible de lire le Google Sheet. Vérifie l'adresse du script et que la fonction doGet est bien installée (voir mode d'emploi).";
+    }
   }
-  if(ok) lastSent=data;
-  sending=false;
-  btn.disabled=false;
-  const stamp=new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
-  btn.textContent = ok ? msg+" — "+stamp : msg;
-  setTimeout(()=>{btn.textContent=SHEET_BTN_LABEL;},5000);
+  enCours=false;
+  $("refresh").disabled=false;
 }
-$("sendSheet").addEventListener("click",()=>sendToSheet(true));
 
-// envoi automatique : 2,5 s après la dernière modification du classement
-let autoSendTimer;
-function scheduleAutoSend(){
-  clearTimeout(autoSendTimer);
-  autoSendTimer=setTimeout(()=>sendToSheet(false),2500);
+function render(){
+  const q=$("search").value.trim().toLowerCase();
+  const shown=data.filter(r=>!q || r.join(" ").toLowerCase().includes(q));
+  $("tbody").innerHTML=shown.map(r=>{
+    const zero = (r[2]||"").trim()==="/" || (r[2]||"").trim()==="0";
+    const cells=r.map((c,i)=>{
+      const cls = i===0?"mat" : i===1?"name" : i===2?"time" : "";
+      return `<td class="${cls}">${esc(c)}</td>`;
+    }).join("");
+    return `<tr class="${zero?"zero":""}">${cells}</tr>`;
+  }).join("");
+  const empty=$("emptyMsg");
+  empty.hidden=shown.length>0;
+  if(!shown.length && data.length) empty.textContent="Aucun résultat pour cette recherche.";
+  else if(!shown.length) empty.textContent="Le Google Sheet est vide pour le moment.";
 }
-taP.addEventListener("input",scheduleAutoSend);
 
-/* ---------- événements & persistance ---------- */
-let timer;
-function onInput(){
-  clearTimeout(timer);
-  timer=setTimeout(()=>{
-    try{
-      localStorage.setItem("pointeuse", taP.value);
-      localStorage.setItem("matriculesShared", taM.value);
-      localStorage.setItem("ignores", taI.value);
-    }catch(e){}
-    analyse();
-  },250);
-}
-taP.addEventListener("input",onInput);
-taM.addEventListener("input",onInput);
-taI.addEventListener("input",onInput);
-$("clearPaste").addEventListener("click",()=>{
-  taP.value="";
-  try{ localStorage.setItem("pointeuse",""); }catch(e){}
-  analyse();
-  taP.focus();
-});
 $("search").addEventListener("input",render);
-function setSort(key){
-  if(sortKey===key) sortDir*=-1;
-  else {sortKey=key; sortDir=key==="time"?-1:1;}
-  render();
-}
-$("sortMat").addEventListener("click",()=>setSort("mat"));
-$("sortTime").addEventListener("click",()=>setSort("time"));
-[["sortMat","mat"],["sortTime","time"]].forEach(([id,k])=>
-  $(id).addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setSort(k);}}));
-
-try{
-  taP.value=localStorage.getItem("pointeuse")||"";
-  // liste des matricules : fournie par matricules.js via getMatricules(),
-  // modifiable sur la page (copie partagée entre les deux pages via le
-  // navigateur). Si le fichier matricules.js a changé depuis la dernière
-  // visite, c'est le fichier qui gagne.
-  let m=localStorage.getItem("matriculesShared");
-  const snap=localStorage.getItem("matriculesFichier");
-  if(m===null || !m.trim() || (DEFAULT_MATRICULES && DEFAULT_MATRICULES!==snap)){
-    m=DEFAULT_MATRICULES || m || "";
-  }
-  taM.value=m;
-  localStorage.setItem("matriculesShared", m);
-  localStorage.setItem("matriculesFichier", DEFAULT_MATRICULES);
-  let ign=localStorage.getItem("ignores");
-  if(ign===null){
-    ign=DEFAULT_IGNORES;
-  }else if(parseInt(localStorage.getItem("ignoresVersion")||"1",10) < IGNORES_VERSION){
-    // nouvelle version des ignorés par défaut : on ajoute les noms manquants
-    const have=new Set(ign.split(/\r?\n/).map(l=>tokens(l).join(" ")).filter(Boolean));
-    const add=DEFAULT_IGNORES.split("\n").filter(l=>!have.has(tokens(l).join(" ")));
-    if(add.length) ign=(ign.trim()?ign.trim()+"\n":"")+add.join("\n");
-  }
-  taI.value=ign;
-  localStorage.setItem("ignores", ign);
-  localStorage.setItem("ignoresVersion", String(IGNORES_VERSION));
-}catch(e){ taM.value=DEFAULT_MATRICULES; taI.value=DEFAULT_IGNORES; }
-analyse();
+$("refresh").addEventListener("click",charger);
+setInterval(charger, 120000);   // rafraîchissement auto toutes les 2 minutes
+charger();
 </script>
